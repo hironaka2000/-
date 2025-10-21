@@ -1,1 +1,398 @@
-k.html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モグラ叩きゲーム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .score, .time {
+            background: #f0f0f0;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .hole {
+            position: relative;
+            width: 100%;
+            height: 150px;
+            background: #8b4513;
+            border-radius: 50% 50% 0 0 / 30% 30% 0 0;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .hole::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 20px;
+            background: #654321;
+            border-radius: 50%;
+        }
+
+        .mole {
+            position: absolute;
+            width: 80%;
+            height: 80px;
+            background: #8B4513;
+            border-radius: 50%;
+            bottom: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: bottom 0.3s ease;
+            cursor: pointer;
+        }
+
+        .mole::before {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            background: #D2691E;
+            border-radius: 50%;
+            top: 10%;
+            left: 20%;
+        }
+
+        .mole::after {
+            content: '👃';
+            position: absolute;
+            font-size: 20px;
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .mole.up {
+            bottom: 20px;
+        }
+
+        .mole.whacked {
+            bottom: -80px !important;
+            transition: bottom 0.1s ease;
+        }
+
+        .eyes {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50%;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .eye {
+            width: 15px;
+            height: 15px;
+            background: white;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .eye::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: black;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .controls {
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .game-over {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.5em;
+            color: #764ba2;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .hole {
+                height: 120px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .game-info {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔨 モグラ叩きゲーム 🔨</h1>
+
+        <div class="game-info">
+            <div class="score">スコア: <span id="score">0</span></div>
+            <div class="time">残り時間: <span id="time">30</span>秒</div>
+        </div>
+
+        <div class="game-board">
+            <div class="hole" data-index="0">
+                <div class="mole">
+                    <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="hole" data-index="1">
+                <div class="mole">
+                    <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="hole" data-index="2">
+                <div class="mole">
+                    <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="hole" data-index="3">
+                <div class="mole">
+                    <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="hole" data-index="4">
+                <div class="mole">
+                    <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="hole" data-index="5">
+                <div class="mole">
+                    <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="hole" data-index="6">
+                <div class="mole">
+                    <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="hole" data-index="7">
+                <div class="mole">
+                    <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="hole" data-index="8">
+                <div class="mole">
+                    <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" class="btn">ゲームスタート</button>
+        </div>
+
+        <div class="game-over" id="gameOver"></div>
+    </div>
+
+    <script>
+        const holes = document.querySelectorAll('.hole');
+        const moles = document.querySelectorAll('.mole');
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('time');
+        const startBtn = document.getElementById('startBtn');
+        const gameOverDisplay = document.getElementById('gameOver');
+
+        let score = 0;
+        let timeLeft = 30;
+        let gameActive = false;
+        let moleTimer;
+        let countdownTimer;
+
+        function randomHole() {
+            const index = Math.floor(Math.random() * holes.length);
+            return holes[index];
+        }
+
+        function randomTime(min, max) {
+            return Math.round(Math.random() * (max - min) + min);
+        }
+
+        function popUp() {
+            if (!gameActive) return;
+
+            const hole = randomHole();
+            const mole = hole.querySelector('.mole');
+            const time = randomTime(500, 1500);
+
+            mole.classList.add('up');
+
+            setTimeout(() => {
+                mole.classList.remove('up');
+                if (gameActive) {
+                    popUp();
+                }
+            }, time);
+        }
+
+        function whack(e) {
+            if (!gameActive) return;
+            if (!e.target.classList.contains('mole')) return;
+            if (!e.target.classList.contains('up')) return;
+
+            score++;
+            scoreDisplay.textContent = score;
+            e.target.classList.remove('up');
+            e.target.classList.add('whacked');
+
+            setTimeout(() => {
+                e.target.classList.remove('whacked');
+            }, 300);
+        }
+
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            gameActive = true;
+            scoreDisplay.textContent = score;
+            timeDisplay.textContent = timeLeft;
+            startBtn.disabled = true;
+            gameOverDisplay.style.display = 'none';
+
+            popUp();
+
+            countdownTimer = setInterval(() => {
+                timeLeft--;
+                timeDisplay.textContent = timeLeft;
+
+                if (timeLeft === 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(countdownTimer);
+            startBtn.disabled = false;
+
+            gameOverDisplay.textContent = `ゲーム終了！最終スコア: ${score}点`;
+            gameOverDisplay.style.display = 'block';
+
+            moles.forEach(mole => {
+                mole.classList.remove('up');
+            });
+        }
+
+        moles.forEach(mole => {
+            mole.addEventListener('click', whack);
+        });
+
+        startBtn.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
